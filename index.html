@@ -25,12 +25,18 @@
   .b1 { background: var(--btn3) }
   .b2 { background: var(--btn2) }
   .b3 { background: var(--btn) }
-  .b4 { background: var(--btn4) }
   .dev { margin-top: 8px; padding: 12px; border-radius: 20px; background: #f3f4f6; color: #334155; font-weight: 700; text-align: center }
   canvas { width: 100%; height: auto; display: block; background: #0f172a; border-radius: 16px }
   .fine { font-size: 12px; color: var(--muted); text-align: center; margin-top: 10px }
 </style>
+
+<!-- Gigapub SDK -->
 <script src="https://ad.gigapub.tech/script?id=1692"></script>
+<script src="https://ad.gigapub.tech/script?id=int-13859"></script>
+
+<!-- Adsgram SDK -->
+<script async src="https://partner.adsgram.ai/adsgram.min.js"></script>
+
 </head>
 <body>
 <div class="wrap">
@@ -50,10 +56,8 @@
       </div>
       <canvas id="game" width="640" height="420"></canvas>
       <div class="btns">
-        <button class="b1" id="autoAdBtn">AUTO AD</button>
         <button class="b2" id="runPauseBtn">RUNNING</button>
         <button class="b3" id="newBtn">NEW GAME</button>
-        <button class="b4" id="stopAutoBtn">STOP AUTO AD</button>
       </div>
       <div class="dev">Developed by <a href="#" style="color:#2563eb;text-decoration:none">iSmart Software Ltd</a></div>
       <div class="fine">Tip: Turn your phone sideways for a wider paddle 😄</div>
@@ -62,26 +66,41 @@
 </div>
 
 <script>
-  // Ad functions
+  // Gigapub Ad Functions
   function showRewarded(){
     window.showGiga()
-      .then(() => { console.log("Rewarded ad completed"); })
-      .catch(e => { console.warn("Rewarded ad failed", e); });
+      .then(() => console.log("Gigapub Rewarded ad completed"))
+      .catch(e => console.warn("Rewarded ad failed", e));
   }
   function showInterstitial(){
     window.showGiga()
-      .then(() => { console.log("Interstitial ad completed"); })
-      .catch(e => { console.warn("Interstitial ad failed", e); });
+      .then(() => console.log("Gigapub Interstitial ad completed"))
+      .catch(e => console.warn("Interstitial ad failed", e));
   }
 
-  const canvas = document.getElementById('game');
+  // Adsgram Ad Functions
+  function showAdsgramAd(){
+    if(window.Adsgram) {
+      Adsgram.show()
+        .then(() => console.log("Adsgram ad shown"))
+        .catch(e => console.warn("Adsgram ad failed", e));
+    }
+  }
+  function showAdsgramInterstitial(){
+    if(window.Adsgram) {
+      Adsgram.show({ format: "interstitial" })
+        .then(() => console.log("Adsgram interstitial shown"))
+        .catch(e => console.warn("Adsgram interstitial failed", e));
+    }
+  }const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   let running = true;
-  let autoAd = false;
   let score = 0, level = 1, lives = 3;
 
   let ball = { x: canvas.width/2, y: canvas.height-28, r: 8, dx: 3, dy: -3 };
-  let paddle = { w: 90, h: 12, x: (canvas.width-90)/2, speed: 7 };const pad = 8;
+  let paddle = { w: 90, h: 12, x: (canvas.width-90)/2, speed: 7 };
+
+  const pad = 8;
   let bricks = [];
   function makeLevel(n){
     const rows = 3 + Math.floor((n-1)%4);
@@ -129,13 +148,9 @@
   const levelEl = document.getElementById('level');
   const livesEl = document.getElementById('lives');
   const runPauseBtn = document.getElementById('runPauseBtn');
-  const autoAdBtn = document.getElementById('autoAdBtn');
-  const stopAutoBtn = document.getElementById('stopAutoBtn');
   const newBtn = document.getElementById('newBtn');
 
   runPauseBtn.onclick = ()=>toggleRun();
-  autoAdBtn.onclick = ()=>{ autoAd = true; autoAdBtn.textContent='AUTO AD: ON'; };
-  stopAutoBtn.onclick = ()=>{ autoAd = false; autoAdBtn.textContent='AUTO AD'; };
   newBtn.onclick = ()=>resetGame();
 
   function toggleRun(){
@@ -151,6 +166,7 @@
     updateHud();
     running = true; runPauseBtn.textContent='RUNNING';
     showRewarded();
+    showAdsgramInterstitial();
   }
   function updateHud(){
     scoreEl.textContent = score;
@@ -185,15 +201,13 @@
         ctx.fillRect(b.x,b.y,b.w,b.h);
         if(rectIntersect(ball.x-ball.r, ball.y-ball.r, ball.r*2, ball.r*2, b.x,b.y,b.w,b.h)){
           b.live=0; score+=10; updateHud();
-          ball.dy = -ball.dy;
-          if(autoAd && score % 50 === 0) showInterstitial();
         }
       }
     }
     if(remain===0){
       level++; updateHud();
       makeLevel(level);
-      showInterstitial();
+      showAdsgramAd();
     }
     if(ball.x + ball.dx < ball.r || ball.x + ball.dx > canvas.width - ball.r) ball.dx = -ball.dx;
     if(ball.y + ball.dy < ball.r) ball.dy = -ball.dy;if(ball.y + ball.dy > canvas.height - ball.r - 12){
@@ -206,7 +220,8 @@
         if(lives<=0){
           running=false;
           alert("GAME OVER 😢");
-          showRewarded();
+          showInterstitial();
+          showAdsgramAd();
         }else{
           ball.x = canvas.width/2; ball.y = canvas.height-28;
           ball.dx = 3*(Math.random()>.5?1:-1); ball.dy = -3;
