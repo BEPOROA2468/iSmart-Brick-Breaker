@@ -4,41 +4,57 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Baduz – iSmart Brick Breaker (Endless)</title>
+
 <style>
-  :root {
-    --bg: #eef2f7; --card: #ffffff; --accent: #ff6b6b; --accent2: #16a34a;
-    --text: #2b2f36; --muted: #6b7280; --shadow: 0 10px 25px rgba(0,0,0,.10);
-    --btn: #ef4444; --btn2: #0ea5e9; --btn3: #10b981; --btn4: #f59e0b;
+  :root{
+    --bg:#eef2f7; --card:#ffffff; --accent:#ff6b6b; --accent2:#16a34a;
+    --text:#2b2f36; --muted:#6b7280; --shadow:0 10px 25px rgba(0,0,0,.10);
+    --btn:#ef4444; --btn2:#0ea5e9;
   }
-  * { box-sizing: border-box }
-  body { margin: 0; background: linear-gradient(135deg,#f0f4ff,#f9fafb); font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif; color: var(--text) }
-  .wrap { max-width: 780px; margin: 24px auto; padding: 16px }
-  .card { background: var(--card); border-radius: 24px; box-shadow: var(--shadow); overflow: hidden }
-  .header { padding: 18px 22px; background: linear-gradient(135deg,#c7d2fe,#e0e7ff); display: flex; align-items: center; gap: 12px }
-  .title { font-size: 22px; font-weight: 800; letter-spacing: .2px }
-  .sub { font-size: 13px; color: var(--muted) }
-  .body { padding: 18px 18px 22px }
-  .hud { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px }
-  .stat { font-weight: 700 }
-  .btns { display: flex; flex-wrap: wrap; gap: 10px; margin: 12px 0 16px }
-  button { border: 0; border-radius: 999px; padding: 10px 16px; font-weight: 700; cursor: pointer; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,.12) }
-  .b1 { background: var(--btn3) }
-  .b2 { background: var(--btn2) }
-  .b3 { background: var(--btn) }
-  .dev { margin-top: 8px; padding: 12px; border-radius: 20px; background: #f3f4f6; color: #334155; font-weight: 700; text-align: center }
-  canvas { width: 100%; height: auto; display: block; background: #0f172a; border-radius: 16px }
-  .fine { font-size: 12px; color: var(--muted); text-align: center; margin-top: 10px }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(135deg,#f0f4ff,#f9fafb);
+       font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;color:var(--text)}
+  .wrap{max-width:780px;margin:24px auto;padding:16px}
+  .card{background:var(--card);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+  .header{padding:18px 22px;background:linear-gradient(135deg,#c7d2fe,#e0e7ff);
+          display:flex;align-items:center;gap:12px}
+  .title{font-size:22px;font-weight:800;letter-spacing:.2px}
+  .sub{font-size:13px;color:var(--muted)}
+  .body{padding:18px 18px 22px}
+  .hud{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  .stat{font-weight:700}
+  .btns{display:flex;gap:10px;margin:12px 0 16px}
+  button{border:0;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+  .b2{background:var(--btn2)}
+  .b3{background:var(--btn)}
+  .dev{margin-top:8px;padding:12px;border-radius:20px;background:#f3f4f6;color:#334155;font-weight:700;text-align:center}
+  canvas{width:100%;height:auto;display:block;background:#0f172a;border-radius:16px}
+  .fine{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+
+  /* ====== Fullscreen loader (freeze-fix) ====== */
+  #ad-loader{
+    position:fixed; inset:0; display:none; place-items:center;
+    background:rgba(0,0,0,.55); z-index:9999; backdrop-filter:blur(2px);
+  }
+  #ad-loader .ring{
+    width:86px;height:86px;border-radius:50%;
+    border:8px solid rgba(255,255,255,.35); border-top-color:#fff;
+    animation:spin 1s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 
-<!-- Gigapub SDK -->
+<!-- Gigapub SDK (তোমার অ্যাপ আইডি) -->
 <script src="https://ad.gigapub.tech/script?id=1692"></script>
-<script src="https://ad.gigapub.tech/script?id=int-13859"></script>
 
 <!-- Adsgram SDK -->
 <script async src="https://partner.adsgram.ai/adsgram.min.js"></script>
-
 </head>
+
 <body>
+<!-- loader overlay -->
+<div id="ad-loader"><div class="ring"></div></div>
+
 <div class="wrap">
   <div class="card">
     <div class="header">
@@ -48,17 +64,21 @@
         <div class="sub">Use Left/Right or Touch • Optimized for Telegram WebView</div>
       </div>
     </div>
+
     <div class="body">
       <div class="hud">
         <div class="stat">Score: <span id="score">0</span></div>
         <div class="stat">Level: <span id="level">1</span></div>
         <div class="stat">Lives: <span id="lives">3</span></div>
       </div>
+
       <canvas id="game" width="640" height="420"></canvas>
+
       <div class="btns">
         <button class="b2" id="runPauseBtn">RUNNING</button>
         <button class="b3" id="newBtn">NEW GAME</button>
       </div>
+
       <div class="dev">Developed by <a href="#" style="color:#2563eb;text-decoration:none">iSmart Software Ltd</a></div>
       <div class="fine">Tip: Turn your phone sideways for a wider paddle 😄</div>
     </div>
@@ -66,181 +86,246 @@
 </div>
 
 <script>
-  // Gigapub Ad Functions
-  function showRewarded(){
-    window.showGiga()
-      .then(() => console.log("Gigapub Rewarded ad completed"))
-      .catch(e => console.warn("Rewarded ad failed", e));
-  }
-  function showInterstitial(){
-    window.showGiga()
-      .then(() => console.log("Gigapub Interstitial ad completed"))
-      .catch(e => console.warn("Interstitial ad failed", e));
-  }
+/* ===================== Ad Safe Wrappers (freeze-fix) ===================== */
+const $loader = document.getElementById('ad-loader');
+function showLoader(){ if($loader) $loader.style.display='grid'; }
+function hideLoader(){ if($loader) $loader.style.display='none'; }
+function withTimeout(promise, ms=15000){
+  return Promise.race([ promise, new Promise((_,rej)=>setTimeout(()=>rej(new Error('ad_timeout')), ms)) ]);
+}
 
-  // Adsgram Ad Functions
-  function showAdsgramAd(){
-    if(window.Adsgram) {
-      Adsgram.show()
-        .then(() => console.log("Adsgram ad shown"))
-        .catch(e => console.warn("Adsgram ad failed", e));
-    }
+let running = true; // game loop flag (used by pause/resume below)
+function pauseGame(){ if(running){ running=false; } }
+function resumeGame(){ if(!running){ running=true; requestAnimationFrame(loop); } }// recover when webview returns from fullscreen ad
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible'){
+    hideLoader();
+    resumeGame();
   }
-  function showAdsgramInterstitial(){
-    if(window.Adsgram) {
-      Adsgram.show({ format: "interstitial" })
-        .then(() => console.log("Adsgram interstitial shown"))
-        .catch(e => console.warn("Adsgram interstitial failed", e));
-    }
-  }const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  let running = true;
-  let score = 0, level = 1, lives = 3;
+});
 
-  let ball = { x: canvas.width/2, y: canvas.height-28, r: 8, dx: 3, dy: -3 };
-  let paddle = { w: 90, h: 12, x: (canvas.width-90)/2, speed: 7 };
+// ---- Gigapub (replace window.showGiga() with your SDK methods if needed)
+async function showGigaInterstitial(){
+  showLoader(); pauseGame();
+  try{
+    await withTimeout(window.showGiga(), 15000);
+  }catch(e){
+    console.warn('Giga interstitial failed/closed:', e);
+  }finally{
+    hideLoader(); resumeGame();
+  }
+}
+async function showGigaRewarded(){
+  showLoader(); pauseGame();
+  try{
+    await withTimeout(window.showGiga(), 20000);
+    // TODO: give in-game reward here if you add any
+  }catch(e){
+    console.warn('Giga rewarded failed/closed:', e);
+  }finally{
+    hideLoader(); resumeGame();
+  }
+}
 
-  const pad = 8;
-  let bricks = [];
-  function makeLevel(n){
-    const rows = 3 + Math.floor((n-1)%4);
-    const cols = 6 + Math.min(4, Math.floor(n/2));
-    const bw = Math.floor((canvas.width - (cols+1)*pad)/cols);
-    const bh = 20;
-    const top = 50;
-    bricks = [];
-    for(let c=0;c<cols;c++){
-      bricks[c] = [];
-      for(let r=0;r<rows;r++){
-        const hole = (r+c+n)%7===0;
-        bricks[c][r] = { x: pad + c*(bw+pad), y: top + r*(bh+pad), w:bw, h:bh, live: hole?0:1 };
+// ---- Adsgram (your interstitial block id)
+const ADSGRAM_INTER_ID = 'int-13859';
+async function showAdsgramInterstitial(){
+  showLoader(); pauseGame();
+  try{
+    const p = new Promise((resolve, reject)=>{
+      if(window.Adsgram && typeof Adsgram.show === 'function'){
+        Adsgram.show(ADSGRAM_INTER_ID, {
+          onClose: ()=>resolve(),
+          onError: (err)=>reject(err)
+        });
+      }else{
+        reject(new Error('adsgram_not_loaded'));
       }
-    }
-    const spd = 3 + Math.min(5, n*0.4);
-    ball.dx = (ball.dx>0?1:-1) * spd;
-    ball.dy = (ball.dy>0?-1:1) * -spd;
-    paddle.w = Math.max(60, 90 - n*3);
+    });
+    await withTimeout(p, 15000);
+  }catch(e){
+    console.warn('Adsgram interstitial failed/closed:', e);
+  }finally{
+    hideLoader(); resumeGame();
   }
+}
+
+/* =========================== Game Code =========================== */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+let score = 0, level = 1, lives = 3;
+
+let ball   = { x: canvas.width/2, y: canvas.height-28, r: 8, dx: 3, dy: -3 };
+let paddle = { w: 90, h: 12, x: (canvas.width-90)/2, speed: 7 };
+
+const pad = 8;
+let bricks = [];
+
+function makeLevel(n){
+  const rows = 3 + Math.floor((n-1)%4);
+  const cols = 6 + Math.min(4, Math.floor(n/2));
+  const bw = Math.floor((canvas.width - (cols+1)*pad)/cols);
+  const bh = 20;
+  const top = 50;
+
+  bricks = [];
+  for(let c=0;c<cols;c++){
+    bricks[c] = [];
+    for(let r=0;r<rows;r++){
+      const hole = (r+c+n)%7===0;
+      bricks[c][r] = { x: pad + c*(bw+pad), y: top + r*(bh+pad), w:bw, h:bh, live: hole?0:1 };
+    }
+  }
+  const spd = 3 + Math.min(5, n*0.4);
+  ball.dx = (ball.dx>0?1:-1) * spd;
+  ball.dy = (ball.dy>0?-1:1) * -spd;
+  paddle.w = Math.max(60, 90 - n*3);
+}
+makeLevel(level);
+
+// input
+let left=false, right=false;
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft') left=true;
+  if(e.key==='ArrowRight') right=true;
+  if(e.key===' ') toggleRun();
+});
+document.addEventListener('keyup',e=>{
+  if(e.key==='ArrowLeft') left=false;
+  if(e.key==='ArrowRight') right=false;
+});
+function pointerMove(clientX){
+  const rect = canvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  paddle.x = Math.max(0, Math.min(canvas.width - paddle.w, x - paddle.w/2));
+}
+canvas.addEventListener('mousemove', e=>pointerMove(e.clientX));
+canvas.addEventListener('touchmove', e=>{ if(e.touches[0]) pointerMove(e.touches[0].clientX); }, {passive:true});
+
+// UI
+const scoreEl = document.getElementById('score');
+const levelEl = document.getElementById('level');
+const livesEl = document.getElementById('lives');
+const runPauseBtn = document.getElementById('runPauseBtn');
+const newBtn = document.getElementById('newBtn');
+
+runPauseBtn.onclick = ()=>toggleRun();
+newBtn.onclick = ()=>resetGame();
+
+function toggleRun(){
+  running = !running;
+  runPauseBtn.textContent = running ? 'RUNNING' : 'PAUSE';
+  if(running) requestAnimationFrame(loop);
+}
+function resetGame(){
+  score=0; level=1; lives=3;
+  ball.x = canvas.width/2; ball.y = canvas.height-28; ball.dx = 3; ball.dy = -3;
+  paddle.x = (canvas.width - paddle.w)/2;
   makeLevel(level);
-
-  let left=false, right=false;
-  document.addEventListener('keydown',e=>{
-    if(e.key==='ArrowLeft') left=true;
-    if(e.key==='ArrowRight') right=true;
-    if(e.key===' ') toggleRun();
-  });
-  document.addEventListener('keyup',e=>{
-    if(e.key==='ArrowLeft') left=false;
-    if(e.key==='ArrowRight') right=false;
-  });
-
-  function pointerMove(clientX){
-    const rect = canvas.getBoundingClientRect();
-    const x = clientX - rect.left;
-    paddle.x = Math.max(0, Math.min(canvas.width - paddle.w, x - paddle.w/2));
-  }
-  canvas.addEventListener('mousemove', e=>pointerMove(e.clientX));
-  canvas.addEventListener('touchmove', e=>{
-    if(e.touches[0]) pointerMove(e.touches[0].clientX);
-  }, {passive:true});
-
-  const scoreEl = document.getElementById('score');
-  const levelEl = document.getElementById('level');
-  const livesEl = document.getElementById('lives');
-  const runPauseBtn = document.getElementById('runPauseBtn');
-  const newBtn = document.getElementById('newBtn');
-
-  runPauseBtn.onclick = ()=>toggleRun();
-  newBtn.onclick = ()=>resetGame();
-
-  function toggleRun(){
-    running = !running;
-    runPauseBtn.textContent = running ? 'RUNNING' : 'PAUSE';
-    if(running) loop();
-  }
-  function resetGame(){
-    score=0; level=1; lives=3;
-    ball.x = canvas.width/2; ball.y = canvas.height-28; ball.dx = 3; ball.dy = -3;
-    paddle.x = (canvas.width - paddle.w)/2;
-    makeLevel(level);
-    updateHud();
-    running = true; runPauseBtn.textContent='RUNNING';
-    showRewarded();
-    showAdsgramInterstitial();
-  }
-  function updateHud(){
-    scoreEl.textContent = score;
-    levelEl.textContent = level;
-    livesEl.textContent = lives;
-  }
-  function rectIntersect(ax,ay,aw,ah, bx,by,bw,bh){
-    return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
-  }
-
-  function draw(){
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    ctx.save(); ctx.globalAlpha=.07;
-    for(let i=0;i<canvas.width;i+=20) ctx.fillRect(i,0,1,canvas.height);
-    for(let i=0;i<canvas.height;i+=20) ctx.fillRect(0,i,canvas.width,1);
-    ctx.restore();
-
-    ctx.fillStyle="#cbd5e1";
-    ctx.fillRect(paddle.x, canvas.height-18, paddle.w, 12);
-
-    ctx.beginPath();
-    ctx.fillStyle="#fca5a5";
-    ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
-    ctx.fill();
-
-    let remain=0;
-    for(const col of bricks){
-      for(const b of col){
-        if(!b.live) continue;
-        remain++;
-        ctx.fillStyle = b.y%2? "#34d399" : "#60a5fa";
-        ctx.fillRect(b.x,b.y,b.w,b.h);
-        if(rectIntersect(ball.x-ball.r, ball.y-ball.r, ball.r*2, ball.r*2, b.x,b.y,b.w,b.h)){
-          b.live=0; score+=10; updateHud();
-        }
-      }
-    }
-    if(remain===0){
-      level++; updateHud();
-      makeLevel(level);
-      showAdsgramAd();
-    }
-    if(ball.x + ball.dx < ball.r || ball.x + ball.dx > canvas.width - ball.r) ball.dx = -ball.dx;
-    if(ball.y + ball.dy < ball.r) ball.dy = -ball.dy;if(ball.y + ball.dy > canvas.height - ball.r - 12){
-      if(ball.x > paddle.x && ball.x < paddle.x + paddle.w){
-        const hit = (ball.x - (paddle.x + paddle.w/2)) / (paddle.w/2);
-        ball.dx = (Math.max(-1, Math.min(1, hit))) * (Math.abs(ball.dx)+0.5);
-        ball.dy = -Math.abs(ball.dy);
-      }else if(ball.y + ball.dy > canvas.height - ball.r){
-        lives--; updateHud();
-        if(lives<=0){
-          running=false;
-          alert("GAME OVER 😢");
-          showInterstitial();
-          showAdsgramAd();
-        }else{
-          ball.x = canvas.width/2; ball.y = canvas.height-28;
-          ball.dx = 3*(Math.random()>.5?1:-1); ball.dy = -3;
-          showRewarded();
-        }
-      }
-    }
-    if(left)  paddle.x = Math.max(0, paddle.x - paddle.speed);
-    if(right) paddle.x = Math.min(canvas.width - paddle.w, paddle.x + paddle.speed);
-
-    ball.x += ball.dx; ball.y += ball.dy;
-  }
-  function loop(){
-    if(!running) return;
-    draw();
-    requestAnimationFrame(loop);
-  }
   updateHud();
-  loop();
+  running = true; runPauseBtn.textContent='RUNNING';
+  // নতুন গেমে রিওয়ার্ডেড
+  showGigaRewarded();
+}function updateHud(){
+  scoreEl.textContent = score;
+  levelEl.textContent = level;
+  livesEl.textContent = lives;
+}
+function rectIntersect(ax,ay,aw,ah, bx,by,bw,bh){
+  return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
+}
+
+// ad re-entry control
+let adLock = false;
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // subtle grid
+  ctx.save(); ctx.globalAlpha=.07;
+  for(let i=0;i<canvas.width;i+=20) ctx.fillRect(i,0,1,canvas.height);
+  for(let i=0;i<canvas.height;i+=20) ctx.fillRect(0,i,canvas.width,1);
+  ctx.restore();
+
+  // paddle
+  ctx.fillStyle="#cbd5e1";
+  ctx.fillRect(paddle.x, canvas.height-18, paddle.w, 12);
+
+  // ball
+  ctx.beginPath();
+  ctx.fillStyle="#fca5a5";
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+  ctx.fill();
+
+  // bricks + hits
+  let remain=0;
+  for(const col of bricks){
+    for(const b of col){
+      if(!b.live) continue;
+      remain++;
+      ctx.fillStyle = b.y%2 ? "#34d399" : "#60a5fa";
+      ctx.fillRect(b.x,b.y,b.w,b.h);
+      if(rectIntersect(ball.x-ball.r, ball.y-ball.r, ball.r*2, ball.r*2, b.x,b.y,b.w,b.h)){
+        b.live=0; score+=10; updateHud();
+        ball.dy = -ball.dy;
+      }
+    }
+  }
+
+  // level clear -> Adsgram interstitial
+  if(remain===0 && !adLock){
+    adLock = true;
+    level++; updateHud();
+    makeLevel(level);
+    pauseGame();
+    showAdsgramInterstitial().then(()=>{ adLock=false; }); // resume ভিতরেই হয়
+    return; // এই ফ্রেম শেষ
+  }
+
+  // walls
+  if(ball.x + ball.dx < ball.r || ball.x + ball.dx > canvas.width - ball.r) ball.dx = -ball.dx;
+  if(ball.y + ball.dy < ball.r) ball.dy = -ball.dy;
+
+  // floor / paddle
+  if(ball.y + ball.dy > canvas.height - ball.r - 12){
+    if(ball.x > paddle.x && ball.x < paddle.x + paddle.w){
+      const hit = (ball.x - (paddle.x + paddle.w/2)) / (paddle.w/2);
+      ball.dx = (Math.max(-1, Math.min(1, hit))) * (Math.abs(ball.dx)+0.5);
+      ball.dy = -Math.abs(ball.dy);
+    }else if(ball.y + ball.dy > canvas.height - ball.r){
+      lives--; updateHud();
+      if(lives<=0 && !adLock){
+        adLock = true;
+        running=false;
+        alert("GAME OVER 😢");
+        showGigaInterstitial().then(()=>{ adLock=false; }); // resume ভিতরেই হয়
+        return;
+      }else{
+        // lose a life -> show rewarded
+        ball.x = canvas.width/2; ball.y = canvas.height-28;
+        ball.dx = 3*(Math.random()>.5?1:-1); ball.dy = -3;
+        showGigaRewarded();
+      }
+    }
+  }
+
+  // paddle move
+  if(left)  paddle.x = Math.max(0, paddle.x - paddle.speed);
+  if(right) paddle.x = Math.min(canvas.width - paddle.w, paddle.x + paddle.speed);
+
+  // advance ball
+  ball.x += ball.dx; ball.y += ball.dy;
+}
+
+function loop(){
+  if(!running) return;
+  draw();
+  requestAnimationFrame(loop);
+}
+
+updateHud();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
