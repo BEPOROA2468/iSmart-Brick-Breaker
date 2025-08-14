@@ -31,7 +31,6 @@
   canvas{width:100%;height:auto;display:block;background:#0f172a;border-radius:16px}
   .fine{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
 
-  /* ====== Fullscreen loader (freeze-fix) ====== */
   #ad-loader{
     position:fixed; inset:0; display:none; place-items:center;
     background:rgba(0,0,0,.55); z-index:9999; backdrop-filter:blur(2px);
@@ -44,15 +43,11 @@
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 
-<!-- Gigapub SDK (তোমার অ্যাপ আইডি) -->
 <script src="https://ad.gigapub.tech/script?id=1692"></script>
-
-<!-- Adsgram SDK -->
 <script async src="https://partner.adsgram.ai/adsgram.min.js"></script>
 </head>
 
 <body>
-<!-- loader overlay -->
 <div id="ad-loader"><div class="ring"></div></div>
 
 <div class="wrap">
@@ -75,7 +70,7 @@
       <canvas id="game" width="640" height="420"></canvas>
 
       <div class="btns">
-        <button class="b2" id="runPauseBtn">RUNNING</button>
+        <button class="b2" id="runPauseBtn">START GAME</button>
         <button class="b3" id="newBtn">NEW GAME</button>
       </div>
 
@@ -86,7 +81,6 @@
 </div>
 
 <script>
-/* ===================== Ad Safe Wrappers (freeze-fix) ===================== */
 const $loader = document.getElementById('ad-loader');
 function showLoader(){ if($loader) $loader.style.display='grid'; }
 function hideLoader(){ if($loader) $loader.style.display='none'; }
@@ -94,53 +88,38 @@ function withTimeout(promise, ms=15000){
   return Promise.race([ promise, new Promise((_,rej)=>setTimeout(()=>rej(new Error('ad_timeout')), ms)) ]);
 }
 
-let running = true; // game loop flag (used by pause/resume below)
+let running = false; // শুরুতে গেম বন্ধ থাকবে
+
 function pauseGame(){ if(running){ running=false; } }
-function resumeGame(){ if(!running){ running=true; requestAnimationFrame(loop); } }// recover when webview returns from fullscreen ad
+function resumeGame(){ if(!running){ running=true; requestAnimationFrame(loop); } }
+
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState === 'visible'){
     hideLoader();
     resumeGame();
   }
-});
-
-// ---- Gigapub (replace window.showGiga() with your SDK methods if needed)
-async function showGigaInterstitial(){
+});async function showGigaInterstitial(){
   showLoader(); pauseGame();
-  try{
-    await withTimeout(window.showGiga(), 15000);
-  }catch(e){
-    console.warn('Giga interstitial failed/closed:', e);
-  }finally{
-    hideLoader(); resumeGame();
-  }
+  try{ await withTimeout(window.showGiga(), 15000); }
+  catch(e){ console.warn('Giga interstitial failed/closed:', e); }
+  finally{ hideLoader(); resumeGame(); }
 }
+
 async function showGigaRewarded(){
   showLoader(); pauseGame();
-  try{
-    await withTimeout(window.showGiga(), 20000);
-    // TODO: give in-game reward here if you add any
-  }catch(e){
-    console.warn('Giga rewarded failed/closed:', e);
-  }finally{
-    hideLoader(); resumeGame();
-  }
+  try{ await withTimeout(window.showGiga(), 20000); }
+  catch(e){ console.warn('Giga rewarded failed/closed:', e); }
+  finally{ hideLoader(); resumeGame(); }
 }
 
-// ---- Adsgram (your interstitial block id)
 const ADSGRAM_INTER_ID = 'int-13859';
 async function showAdsgramInterstitial(){
   showLoader(); pauseGame();
   try{
     const p = new Promise((resolve, reject)=>{
       if(window.Adsgram && typeof Adsgram.show === 'function'){
-        Adsgram.show(ADSGRAM_INTER_ID, {
-          onClose: ()=>resolve(),
-          onError: (err)=>reject(err)
-        });
-      }else{
-        reject(new Error('adsgram_not_loaded'));
-      }
+        Adsgram.show(ADSGRAM_INTER_ID, { onClose: ()=>resolve(), onError: (err)=>reject(err) });
+      }else{ reject(new Error('adsgram_not_loaded')); }
     });
     await withTimeout(p, 15000);
   }catch(e){
@@ -150,15 +129,11 @@ async function showAdsgramInterstitial(){
   }
 }
 
-/* =========================== Game Code =========================== */
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
-
 let score = 0, level = 1, lives = 3;
-
 let ball   = { x: canvas.width/2, y: canvas.height-28, r: 8, dx: 3, dy: -3 };
 let paddle = { w: 90, h: 12, x: (canvas.width-90)/2, speed: 7 };
-
 const pad = 8;
 let bricks = [];
 
@@ -168,7 +143,6 @@ function makeLevel(n){
   const bw = Math.floor((canvas.width - (cols+1)*pad)/cols);
   const bh = 20;
   const top = 50;
-
   bricks = [];
   for(let c=0;c<cols;c++){
     bricks[c] = [];
@@ -184,7 +158,6 @@ function makeLevel(n){
 }
 makeLevel(level);
 
-// input
 let left=false, right=false;
 document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft') left=true;
@@ -203,7 +176,6 @@ function pointerMove(clientX){
 canvas.addEventListener('mousemove', e=>pointerMove(e.clientX));
 canvas.addEventListener('touchmove', e=>{ if(e.touches[0]) pointerMove(e.touches[0].clientX); }, {passive:true});
 
-// UI
 const scoreEl = document.getElementById('score');
 const levelEl = document.getElementById('level');
 const livesEl = document.getElementById('lives');
@@ -215,7 +187,7 @@ newBtn.onclick = ()=>resetGame();
 
 function toggleRun(){
   running = !running;
-  runPauseBtn.textContent = running ? 'RUNNING' : 'PAUSE';
+  runPauseBtn.textContent = running ? 'RUNNING' : 'START GAME';
   if(running) requestAnimationFrame(loop);
 }
 function resetGame(){
@@ -224,10 +196,11 @@ function resetGame(){
   paddle.x = (canvas.width - paddle.w)/2;
   makeLevel(level);
   updateHud();
-  running = true; runPauseBtn.textContent='RUNNING';
-  // নতুন গেমে রিওয়ার্ডেড
+  running = false; // নতুন গেমেও শুরুতে বন্ধ
+  runPauseBtn.textContent='START GAME';
   showGigaRewarded();
-}function updateHud(){
+}
+function updateHud(){
   scoreEl.textContent = score;
   levelEl.textContent = level;
   livesEl.textContent = lives;
@@ -236,29 +209,18 @@ function rectIntersect(ax,ay,aw,ah, bx,by,bw,bh){
   return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
 }
 
-// ad re-entry control
 let adLock = false;
-
 function draw(){
   ctx.clearRect(0,0,canvas.width,canvas.height);
-
-  // subtle grid
   ctx.save(); ctx.globalAlpha=.07;
-  for(let i=0;i<canvas.width;i+=20) ctx.fillRect(i,0,1,canvas.height);
-  for(let i=0;i<canvas.height;i+=20) ctx.fillRect(0,i,canvas.width,1);
+  for(let i=0;i<canvas.width;i+=20) ctx.fillRect(i,0,1,canvas.height);for(let i=0;i<canvas.height;i+=20) ctx.fillRect(0,i,canvas.width,1);
   ctx.restore();
-
-  // paddle
   ctx.fillStyle="#cbd5e1";
   ctx.fillRect(paddle.x, canvas.height-18, paddle.w, 12);
-
-  // ball
   ctx.beginPath();
   ctx.fillStyle="#fca5a5";
   ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
   ctx.fill();
-
-  // bricks + hits
   let remain=0;
   for(const col of bricks){
     for(const b of col){
@@ -272,22 +234,16 @@ function draw(){
       }
     }
   }
-
-  // level clear -> Adsgram interstitial
   if(remain===0 && !adLock){
     adLock = true;
     level++; updateHud();
     makeLevel(level);
     pauseGame();
-    showAdsgramInterstitial().then(()=>{ adLock=false; }); // resume ভিতরেই হয়
-    return; // এই ফ্রেম শেষ
+    showAdsgramInterstitial().then(()=>{ adLock=false; });
+    return;
   }
-
-  // walls
   if(ball.x + ball.dx < ball.r || ball.x + ball.dx > canvas.width - ball.r) ball.dx = -ball.dx;
   if(ball.y + ball.dy < ball.r) ball.dy = -ball.dy;
-
-  // floor / paddle
   if(ball.y + ball.dy > canvas.height - ball.r - 12){
     if(ball.x > paddle.x && ball.x < paddle.x + paddle.w){
       const hit = (ball.x - (paddle.x + paddle.w/2)) / (paddle.w/2);
@@ -299,25 +255,19 @@ function draw(){
         adLock = true;
         running=false;
         alert("GAME OVER 😢");
-        showGigaInterstitial().then(()=>{ adLock=false; }); // resume ভিতরেই হয়
+        showGigaInterstitial().then(()=>{ adLock=false; });
         return;
       }else{
-        // lose a life -> show rewarded
         ball.x = canvas.width/2; ball.y = canvas.height-28;
         ball.dx = 3*(Math.random()>.5?1:-1); ball.dy = -3;
         showGigaRewarded();
       }
     }
   }
-
-  // paddle move
   if(left)  paddle.x = Math.max(0, paddle.x - paddle.speed);
   if(right) paddle.x = Math.min(canvas.width - paddle.w, paddle.x + paddle.speed);
-
-  // advance ball
   ball.x += ball.dx; ball.y += ball.dy;
 }
-
 function loop(){
   if(!running) return;
   draw();
@@ -325,7 +275,6 @@ function loop(){
 }
 
 updateHud();
-requestAnimationFrame(loop);
 </script>
 </body>
 </html>
