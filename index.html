@@ -59,43 +59,6 @@
 <!-- Adsgram SDK -->
 <script async src="https://partner.adsgram.ai/adsgram.min.js"></script>
 </head>
-
-<script>
-const API_BASE = 'https://ismart-backend-dpoy.onrender.com'; // তোমার Render URL
-let AUTH_TOKEN = '';
-</script>
-
-
-<script>
-async function serverAuth() {
-    const wa = window.Telegram && window.Telegram.WebApp;
-    if (!wa || !wa.initData) return; // Telegram না খুললে কাজ করবে না
-
-    const r = await fetch(API_BASE + '/api/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: wa.initData })
-    });
-
-    const data = await r.json();
-    if (data.token) {
-        AUTH_TOKEN = data.token;
-
-        // ইউজারের ডেটা লোড
-        const me = await fetch(API_BASE + '/api/me', {
-            headers: { 'Authorization': 'Bearer ' + AUTH_TOKEN }
-        });
-        const userData = await me.json();
-        console.log('User:', userData);
-    }
-}
-
-// পেজ লোড হলে auth শুরু করো
-window.addEventListener('load', serverAuth);
-</script>
-
-
-
   
 <body>
 
@@ -542,6 +505,7 @@ updateCooldownUI();
 </script>
 </body>
 </html>
+
 
 
 
