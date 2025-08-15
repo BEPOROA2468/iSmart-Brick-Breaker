@@ -1,127 +1,124 @@
-
-
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>iSmart Brick BreakerEndless</title>
-
-<!-- Gigapub SDK -->
-<script src="https://ad.gigapub.tech/script?id=1692"></script>
-<!-- Adsgram SDK -->
-<script async src="https://partner.adsgram.ai/adsgram.min.js"></script>
-
-<style>
-body { font-family: Arial, sans-serif; background: #eef2f7; margin:0; padding:0; }
-.container { max-width: 800px; margin: auto; padding: 20px; background: white; border-radius: 10px; }
-h1 { text-align: center; }
-.btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; }
-.btn-primary { background: #0ea5e9; }
-.btn-danger { background: #ef4444; }
-.balance { font-size: 18px; margin-top: 10px; text-align: center; }
-#game { display: block; margin: auto; background: #0f172a; border-radius: 8px; }
-#withdrawModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); justify-content:center; align-items:center; }
-.modal-content { background:white; padding:20px; border-radius:10px; width:300px; }
-</style>
-
-<script>
-const API_BASE = 'https://ismart-backend-dpoy.onrender.com'; // তোমার Render backend URL
-let AUTH_TOKEN = ''; // Telegram WebApp auth token
-
-function getAuthFromTelegram(){
-  if (window.Telegram && Telegram.WebApp && Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initData) {
-    AUTH_TOKEN = Telegram.WebApp.initData;
-  }
-}
-</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iSmart Brick Breaker</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-<body onload="getAuthFromTelegram()">
+<body>
 
-<div class="container">
-  <h1>🎮 iSmart Brick Breaker</h1>
-  <div class="balance">Balance: <span id="balance">0</span> coins</div>
-  
-  <canvas id="game" width="640" height="420"></canvas>
-  
-  <div style="text-align:center; margin-top:10px;">
-    <button class="btn btn-primary" onclick="showRewardedAndReward()">🎥 Watch Ad</button>
-    <button class="btn btn-danger" onclick="withdrawModal.style.display='flex'">💰 Withdraw</button>
-  </div>
+<!-- গেম UI -->
+<div id="game-container">
+    <div id="hud">
+        <span>Score: <span id="score">0</span></span>
+        <span>Level: <span id="level">1</span></span>
+        <span>Lives: <span id="lives">3</span></span>
+        <span>Balance: <span id="balance">0</span> coins</span>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <div id="buttons">
+        <button id="startGame">Start Game</button>
+        <button id="newGame">New Game</button>
+        <button id="watchAd">Watch Ad</button>
+        <button id="profileBtn">Profile</button>
+        <button id="withdrawBtn">Withdraw</button>
+    </div>
 </div>
 
 <!-- Withdraw Modal -->
-<div id="withdrawModal">
-  <div class="modal-content">
+<div id="withdrawModal" style="display:none;">
     <h3>Withdraw</h3>
-    <label>Amount (Coins):</label>
-    <input type="number" id="w_amount" style="width:100%;margin-bottom:8px;">
-    <label>Method:</label>
-    <select id="w_method" style="width:100%;margin-bottom:8px;">
-      <option value="USDT">USDT</option>
-      <option value="Bkash">Bkash</option>
-      <option value="Nagad">Nagad</option>
+    <input type="number" id="w_amount" placeholder="Amount in coins">
+    <input type="text" id="w_account" placeholder="Wallet/Account">
+    <select id="w_method">
+        <option value="bkash">bKash</option>
+        <option value="nagad">Nagad</option>
+        <option value="paypal">Binance Pay</option>
     </select>
-    <label>Account/Wallet:</label>
-    <input type="text" id="w_account" style="width:100%;margin-bottom:8px;">
-    <button id="submitWithdrawBtn" class="btn btn-primary" style="width:100%;margin-bottom:5px;">Submit</button>
-    <button onclick="withdrawModal.style.display='none'" class="btn btn-danger" style="width:100%;">Close</button>
-  </div>
+    <button id="submitWithdrawBtn">Submit</button>
 </div>
 
 <script>
-// ======= 3.3 Code (Reward from server) =======
-async function rewardFromServer(){  
-  if(!AUTH_TOKEN){ alert('Open in Telegram to earn.'); return; }  
-  const r = await fetch(API_BASE + '/api/reward/ad', {    
-    method:'POST',    
-    headers:{ Authorization:'Bearer ' + AUTH_TOKEN }  
-  });  
-  const data = await r.json();  
-  if(r.ok){    
-    document.getElementById('balance').textContent = data.balance;    
-  }else{    
-    if(data.error==='cooldown') alert('Wait '+data.left+'s');    
-    else alert('Failed: '+data.error);  
-  }
+const API_BASE = 'https://ismart-backend-dpoy.onrender.com'; // তোমার Render URL
+let AUTH_TOKEN = '';
+
+// Telegram Auth Load
+async function serverAuth() {
+    const wa = window.Telegram && window.Telegram.WebApp;
+    if (!wa || !wa.initData) return;
+
+    const r = await fetch(API_BASE + '/api/auth', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ initData: wa.initData })
+    });
+    const data = await r.json();
+    if (data.token) {
+        AUTH_TOKEN = data.token;
+        const me = await fetch(API_BASE + '/api/me', {
+            headers: { Authorization: 'Bearer ' + AUTH_TOKEN }
+        }).then(r => r.json());
+        document.getElementById('balance').textContent = me.balance;
+    }
+}
+serverAuth();
+
+// 3.3 Reward Function
+async function rewardFromServer() {
+    if(!AUTH_TOKEN){ alert('Open in Telegram to earn.'); return; }
+    const r = await fetch(API_BASE + '/api/reward/ad', {
+        method:'POST',
+        headers:{ Authorization:'Bearer ' + AUTH_TOKEN }
+    });
+    const data = await r.json();
+    if(r.ok){
+        document.getElementById('balance').textContent = data.balance;
+    } else {
+        if(data.error==='cooldown') alert('Wait '+data.left+'s');
+        else alert('Failed: '+data.error);
+    }
 }
 
-// ===== Show rewarded ad and then reward =====
-async function showRewardedAndReward(){
-  try{
-    // Gigapub Rewarded
-    await window.showGiga();
-    await rewardFromServer();
-  }catch(e){
-    console.warn(e);
-  }
-}
+// Watch Ad Button
+document.getElementById('watchAd').onclick = async () => {
+    // এখানে তোমার এড দেখানোর কোড থাকবে
+    let ok = true; // ad দেখানোর পর true হলে কয়েন যোগ হবে
+    if(ok){
+        await rewardFromServer();
+    }
+};
 
-// ======= 3.4 Code (Withdraw) =======
+// 3.4 Withdraw Function
 document.getElementById('submitWithdrawBtn').onclick = async ()=>{
-  if(!AUTH_TOKEN) { alert('Open in Telegram to withdraw.'); return; }
-  const amt = Number(document.getElementById('w_amount').value||'0');const method = document.getElementById('w_method').value;
-  const account = document.getElementById('w_account').value.trim();
-  if(!account) return alert('Enter account/wallet');
-  const r = await fetch(API_BASE + '/api/withdraw', {
-    method:'POST',
-    headers:{
-      'Content-Type':'application/json',
-      Authorization:'Bearer ' + AUTH_TOKEN
-    },
-    body: JSON.stringify({ method, account, amount_coins: amt })
-  });
-  const data = await r.json();
-  if(r.ok){
-    alert('Withdraw request submitted!');
-    withdrawModal.style.display='none';
-    const me = await fetch(API_BASE + '/api/me', { headers:{ Authorization:'Bearer '+AUTH_TOKEN } }).then(r=>r.json());
-    document.getElementById('balance').textContent = me.balance;
-  }else{
-    alert('Failed: ' + data.error);
-  }
+    if(!AUTH_TOKEN) { alert('Open in Telegram to withdraw.'); return; }
+    const amt = Number(document.getElementById('w_amount').value||'0');
+    const method = document.getElementById('w_method').value;
+    const account = document.getElementById('w_account').value.trim();
+    if(!account) return alert('Enter account/wallet');
+
+    const r = await fetch(API_BASE + '/api/withdraw', {
+        method:'POST',
+        headers:{
+            'Content-Type':'application/json',
+            Authorization:'Bearer ' + AUTH_TOKEN
+        },
+        body: JSON.stringify({ method, account, amount_coins: amt })
+    });
+    const data = await r.json();
+    if(r.ok){
+        alert('Withdraw request submitted!');
+        withdrawModal.style.display='none';
+        const me = await fetch(API_BASE + '/api/me', { 
+            headers:{ Authorization:'Bearer '+AUTH_TOKEN }
+        }).then(r=>r.json());
+        document.getElementById('balance').textContent = me.balance;
+    } else {
+        alert('Failed: ' + data.error);
+    }
 };
 </script>
 
+<script src="game.js"></script>
 </body>
 </html>
