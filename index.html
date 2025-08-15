@@ -76,7 +76,7 @@
       <div class="field"><label>Email</label><input id="p_email" placeholder="name@email.com" /></div>
       <div class="field"><label>User ID (read-only)</label><input id="p_uid" readonly /></div>
     </div>
-    <div class="muted">ডাটা তোমার ব্রাউজারের localStorage-এ সংরক্ষিত। (ডেমো)</div>
+    <div class="muted">""</div>
     <div class="row" style="margin-top:10px">
       <button class="mBtn" id="saveProfileBtn">Save</button>
       <button class="mClose" id="closeProfileBtn">Close</button>
@@ -93,19 +93,19 @@
           <option value="bkash">bKash</option>
           <option value="nagad">Nagad</option>
           <option value="rocket">Rocket</option>
-          <option value="binance">Binance (USDT)</option>
+          <option value="binance">Binance Pay</option>
         </select>
       </div>
       <div class="field">
         <label>Account / Wallet</label>
-        <input id="w_account" placeholder="e.g., 01XXXXXXXXX / USDT Address" />
+        <input id="w_account" placeholder="e.g., 01XXXXXXXXX / Enter Your Binance Pay Id " />
       </div>
     </div>
     <div class="row">
       <div class="field"><label>Amount (min 100)</label><input id="w_amount" type="number" min="100" step="10" value="100" /></div>
       <div class="field"><label>Current Balance</label><input id="w_balance" readonly /></div>
     </div>
-    <div class="muted">এটা ডেমো — রিয়েল পেমেন্টের জন্য সার্ভার/API ইন্টিগ্রেশন লাগবে।</div>
+    <div class="muted">""</div>
     <div class="row" style="margin-top:10px">
       <button class="mBtn" id="submitWithdrawBtn">Request Withdraw</button>
       <button class="mClose" id="closeWithdrawBtn">Close</button>
@@ -504,3 +504,4 @@ updateCooldownUI();
 </script>
 </body>
 </html>
+
