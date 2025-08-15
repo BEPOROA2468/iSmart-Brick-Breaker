@@ -414,7 +414,7 @@ document.getElementById('saveProfileBtn').onclick = ()=>{
   profileModal.style.display='none';
 };
 
-// Withdraw modal actions (demo)
+// Withdraw modal actions
 const withdrawModal = document.getElementById('submitWithdrawBtn').onclick = async ()=>{
   if(!AUTH_TOKEN) { alert('Open in Telegram to withdraw.'); return; }
   const amt = Number(document.getElementById('w_amount').value||'0');
@@ -545,6 +545,7 @@ updateCooldownUI();
 </script>
 </body>
 </html>
+
 
 
 
