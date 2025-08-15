@@ -52,12 +52,34 @@
   @keyframes spin{to{transform:rotate(360deg)}}
 </style>
 
-<!-- Gigapub SDK -->
-<script src="https://ad.gigapub.tech/script?id=1692"></script>
-<!-- (যদি আলাদা ইন্টারস্টিশিয়াল/রিওয়ার্ড আইডি থাকে, প্রয়োজন অনুযায়ী স্ক্রিপ্ট রাখতে পারো) -->
+<!-- Safe Async Ad Loader -->
+<script>
+function loadScript(src, callback) {
+  let s = document.createElement('script');
+  s.src = src;
+  s.async = true;
+  s.onload = () => callback(true);
+  s.onerror = () => callback(false);
+  document.head.appendChild(s);
+}
 
-<!-- Adsgram SDK -->
-<script async src="https://partner.adsgram.ai/adsgram.min.js"></script>
+// 1. Gigapub Load
+loadScript("https://ad.gigapub.tech/script?id=1692", function(ok1){
+    if(!ok1) console.warn("Gigapub blocked, trying Adsgram...");
+    // 2. Adsgram Load (fallback)
+    loadScript("https://partner.adsgram.ai/adsgram.min.js", function(ok2){
+        if(!ok1 && !ok2) console.warn("Both ad networks blocked!");
+        initGame(); // Start game regardless of ads load
+    });
+});
+
+// Safe game start
+function initGame(){
+  console.log("Game starting with available ads setup...");
+  // এখানে আপনার গেম initialize করার কোড কল হবে
+}
+</script>
+
 </head>
   
 <body>
@@ -505,6 +527,7 @@ updateCooldownUI();
 </script>
 </body>
 </html>
+
 
 
 
