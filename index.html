@@ -415,29 +415,32 @@ document.getElementById('saveProfileBtn').onclick = ()=>{
 };
 
 // Withdraw modal actions (demo)
-const withdrawModal = document.getElementById('withdrawModal');
-withdrawBtn.onclick = ()=>{
-  document.getElementById('w_balance').value = getBalance();
-  withdrawModal.style.display='flex';
-};
-document.getElementById('closeWithdrawBtn').onclick = ()=> withdrawModal.style.display='none';
-document.getElementById('submitWithdrawBtn').onclick = ()=>{
-  const bal = getBalance();
+const withdrawModal = document.getElementById('submitWithdrawBtn').onclick = async ()=>{
+  if(!AUTH_TOKEN) { alert('Open in Telegram to withdraw.'); return; }
   const amt = Number(document.getElementById('w_amount').value||'0');
   const method = document.getElementById('w_method').value;
   const account = document.getElementById('w_account').value.trim();
-  if(amt < 100) return alert('Minimum withdraw 100');
-  if(amt > bal) return alert('Insufficient balance');
-  if(!account) return alert('Enter account / wallet');
+  if(!account) return alert('Enter account/wallet');
 
-  const reqs = JSON.parse(localStorage.getItem(LS_KEY_WREQ) || '[]');
-  const u = loadUser();
-  reqs.push({ id: 'wr-'+Date.now(), user: u, method, account, amount: amt, at: new Date().toISOString(), status:'pending' });
-  localStorage.setItem(LS_KEY_WREQ, JSON.stringify(reqs));
-
-  setBalance(bal - amt);
-  alert('Withdraw request submitted (demo).');
-  withdrawModal.style.display='none';
+  const r = await fetch(API_BASE + '/api/withdraw', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      Authorization:'Bearer ' + AUTH_TOKEN
+    },
+    body: JSON.stringify({ method, account, amount_coins: amt })
+  });
+  const data = await r.json();
+  if(r.ok){
+    alert('Withdraw request submitted!');
+    withdrawModal.style.display='none';
+    // ব্যালেন্স রিফ্রেশ
+    const me = await fetch(API_BASE + '/api/me', { headers:{ Authorization:'Bearer '+AUTH_TOKEN } }).then(r=>r.json());
+    document.getElementById('balance').textContent = me.balance;
+    document.getElementById('ui_balance').textContent = me.balance;
+  }else{
+    alert('Failed: ' + data.error);
+  }
 };
 
 function toggleRun(){
@@ -542,6 +545,7 @@ updateCooldownUI();
 </script>
 </body>
 </html>
+
 
 
 
