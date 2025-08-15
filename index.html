@@ -1,124 +1,551 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iSmart Brick Breaker</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Baduz – iSmart Brick Breaker (Endless)</title>
+
+<style>
+  :root{
+    --bg:#eef2f7; --card:#ffffff; --accent:#ff6b6b; --accent2:#16a34a;
+    --text:#2b2f36; --muted:#6b7280; --shadow:0 10px 25px rgba(0,0,0,.10);
+    --btn:#ef4444; --btn2:#0ea5e9; --btn3:#10b981; --btn4:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(135deg,#f0f4ff,#f9fafb);
+       font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;color:var(--text)}
+  .wrap{max-width:880px;margin:24px auto;padding:16px}
+  .card{background:var(--card);border-radius:24px;box-shadow:var(--shadow);overflow:hidden}
+  .header{padding:18px 22px;background:linear-gradient(135deg,#c7d2fe,#e0e7ff);
+          display:flex;align-items:center;gap:12px}
+  .title{font-size:22px;font-weight:800;letter-spacing:.2px}
+  .sub{font-size:13px;color:var(--muted)}
+  .body{padding:18px 18px 22px}
+  .hud{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .stat{font-weight:700}
+  .btns{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 16px}
+  button{border:0;border-radius:999px;padding:10px 16px;font-weight:700;cursor:pointer;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+  .bStart{background:var(--btn2)}
+  .bNew{background:var(--btn)}
+  .bWatch{background:var(--btn4)}
+  .bProfile{background:var(--btn3)}
+  .bWithdraw{background:#7c3aed}
+  .dev{margin-top:8px;padding:12px;border-radius:20px;background:#f3f4f6;color:#334155;font-weight:700;text-align:center}
+  canvas{width:100%;height:auto;display:block;background:#0f172a;border-radius:16px}
+  .fine{font-size:12px;color:var(--muted);text-align:center;margin-top:10px}
+
+  /* Modal */
+  .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.5);z-index:9999}
+  .modal .box{width:min(560px,92%);background:#fff;border-radius:18px;box-shadow:var(--shadow);padding:16px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row > *{flex:1}
+  .field{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+  .field input,.field select{padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;font-size:14px}
+  .mHead{font-weight:800;font-size:18px;margin-bottom:8px}
+  .mBtn{background:#0ea5e9}
+  .mClose{background:#ef4444}
+  .muted{color:#6b7280;font-size:13px}
+
+  /* Loader for ads */
+  #ad-loader{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.55);z-index:9998;backdrop-filter:blur(2px)}
+  #ad-loader .ring{width:86px;height:86px;border-radius:50%;border:8px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+
+<!-- Gigapub SDK -->
+<script src="https://ad.gigapub.tech/script?id=1692"></script>
+<!-- (যদি আলাদা ইন্টারস্টিশিয়াল/রিওয়ার্ড আইডি থাকে, প্রয়োজন অনুযায়ী স্ক্রিপ্ট রাখতে পারো) -->
+
+<!-- Adsgram SDK -->
+<script async src="https://partner.adsgram.ai/adsgram.min.js"></script>
 </head>
-<body>
-
-<!-- গেম UI -->
-<div id="game-container">
-    <div id="hud">
-        <span>Score: <span id="score">0</span></span>
-        <span>Level: <span id="level">1</span></span>
-        <span>Lives: <span id="lives">3</span></span>
-        <span>Balance: <span id="balance">0</span> coins</span>
-    </div>
-    <canvas id="gameCanvas"></canvas>
-    <div id="buttons">
-        <button id="startGame">Start Game</button>
-        <button id="newGame">New Game</button>
-        <button id="watchAd">Watch Ad</button>
-        <button id="profileBtn">Profile</button>
-        <button id="withdrawBtn">Withdraw</button>
-    </div>
-</div>
-
-<!-- Withdraw Modal -->
-<div id="withdrawModal" style="display:none;">
-    <h3>Withdraw</h3>
-    <input type="number" id="w_amount" placeholder="Amount in coins">
-    <input type="text" id="w_account" placeholder="Wallet/Account">
-    <select id="w_method">
-        <option value="bkash">bKash</option>
-        <option value="nagad">Nagad</option>
-        <option value="paypal">Binance Pay</option>
-    </select>
-    <button id="submitWithdrawBtn">Submit</button>
-</div>
 
 <script>
 const API_BASE = 'https://ismart-backend-dpoy.onrender.com'; // তোমার Render URL
 let AUTH_TOKEN = '';
+</script>
 
-// Telegram Auth Load
+
+<script>
 async function serverAuth() {
     const wa = window.Telegram && window.Telegram.WebApp;
-    if (!wa || !wa.initData) return;
+    if (!wa || !wa.initData) return; // Telegram না খুললে কাজ করবে না
 
     const r = await fetch(API_BASE + '/api/auth', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData: wa.initData })
     });
+
     const data = await r.json();
     if (data.token) {
         AUTH_TOKEN = data.token;
+
+        // ইউজারের ডেটা লোড
         const me = await fetch(API_BASE + '/api/me', {
-            headers: { Authorization: 'Bearer ' + AUTH_TOKEN }
-        }).then(r => r.json());
-        document.getElementById('balance').textContent = me.balance;
-    }
-}
-serverAuth();
-
-// 3.3 Reward Function
-async function rewardFromServer() {
-    if(!AUTH_TOKEN){ alert('Open in Telegram to earn.'); return; }
-    const r = await fetch(API_BASE + '/api/reward/ad', {
-        method:'POST',
-        headers:{ Authorization:'Bearer ' + AUTH_TOKEN }
-    });
-    const data = await r.json();
-    if(r.ok){
-        document.getElementById('balance').textContent = data.balance;
-    } else {
-        if(data.error==='cooldown') alert('Wait '+data.left+'s');
-        else alert('Failed: '+data.error);
+            headers: { 'Authorization': 'Bearer ' + AUTH_TOKEN }
+        });
+        const userData = await me.json();
+        console.log('User:', userData);
     }
 }
 
-// Watch Ad Button
-document.getElementById('watchAd').onclick = async () => {
-    // এখানে তোমার এড দেখানোর কোড থাকবে
-    let ok = true; // ad দেখানোর পর true হলে কয়েন যোগ হবে
-    if(ok){
-        await rewardFromServer();
-    }
-};
-
-// 3.4 Withdraw Function
-document.getElementById('submitWithdrawBtn').onclick = async ()=>{
-    if(!AUTH_TOKEN) { alert('Open in Telegram to withdraw.'); return; }
-    const amt = Number(document.getElementById('w_amount').value||'0');
-    const method = document.getElementById('w_method').value;
-    const account = document.getElementById('w_account').value.trim();
-    if(!account) return alert('Enter account/wallet');
-
-    const r = await fetch(API_BASE + '/api/withdraw', {
-        method:'POST',
-        headers:{
-            'Content-Type':'application/json',
-            Authorization:'Bearer ' + AUTH_TOKEN
-        },
-        body: JSON.stringify({ method, account, amount_coins: amt })
-    });
-    const data = await r.json();
-    if(r.ok){
-        alert('Withdraw request submitted!');
-        withdrawModal.style.display='none';
-        const me = await fetch(API_BASE + '/api/me', { 
-            headers:{ Authorization:'Bearer '+AUTH_TOKEN }
-        }).then(r=>r.json());
-        document.getElementById('balance').textContent = me.balance;
-    } else {
-        alert('Failed: ' + data.error);
-    }
-};
+// পেজ লোড হলে auth শুরু করো
+window.addEventListener('load', serverAuth);
 </script>
 
-<script src="game.js"></script>
+
+
+  
+<body>
+
+<!-- Ad loader overlay -->
+<div id="ad-loader"><div class="ring"></div></div>
+
+<!-- Profile Modal -->
+<div class="modal" id="profileModal">
+  <div class="box">
+    <div class="mHead">👤 User Profile</div>
+    <div class="row">
+      <div class="field"><label>Name</label><input id="p_name" placeholder="Your name" /></div>
+      <div class="field"><label>Username</label><input id="p_username" placeholder="@username" /></div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Email</label><input id="p_email" placeholder="name@email.com" /></div>
+      <div class="field"><label>User ID (read-only)</label><input id="p_uid" readonly /></div>
+    </div>
+    <div class="muted">""</div>
+    <div class="row" style="margin-top:10px">
+      <button class="mBtn" id="saveProfileBtn">Save</button>
+      <button class="mClose" id="closeProfileBtn">Close</button>
+    </div>
+  </div>
+</div><!-- Withdraw Modal -->
+<div class="modal" id="withdrawModal">
+  <div class="box">
+    <div class="mHead">💳 Withdraw</div>
+    <div class="row">
+      <div class="field">
+        <label>Method</label>
+        <select id="w_method">
+          <option value="bkash">bKash</option>
+          <option value="nagad">Nagad</option>
+          <option value="rocket">Rocket</option>
+          <option value="binance">Binance Pay</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Account / Wallet</label>
+        <input id="w_account" placeholder="Enter Your Binance Pay Id " />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><label>Amount (min 100)</label><input id="w_amount" type="number" min="100" step="10" value="100" /></div>
+      <div class="field"><label>Current Balance</label><input id="w_balance" readonly /></div>
+    </div>
+    <div class="muted">""</div>
+    <div class="row" style="margin-top:10px">
+      <button class="mBtn" id="submitWithdrawBtn">Request Withdraw</button>
+      <button class="mClose" id="closeWithdrawBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <div class="header">
+      <div style="font-size:28px">🎮</div>
+      <div>
+        <div class="title">iSmart Brick Breaker — Endless</div>
+        <div class="sub">Use Left/Right or Touch •</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div style="font-weight:800" id="ui_user_name">Guest</div>
+        <div class="muted">Balance: <span id="ui_balance">0</span> • ID: <span id="ui_user_id">-</span></div>
+      </div>
+    </div>
+
+    <div class="body">
+      <div class="hud">
+        <div class="stat">Score: <span id="score">0</span></div>
+        <div class="stat">Level: <span id="level">1</span></div>
+        <div class="stat">Lives: <span id="lives">3</span></div>
+        <div class="stat">Balance: <span id="balance">0</span></div>
+        <div class="stat"> <span id="cooldown"></span></div>
+      </div>
+
+      <canvas id="game" width="640" height="420"></canvas>
+
+      <div class="btns">
+        <button class="bStart" id="runPauseBtn">START GAME</button>
+        <button class="bNew" id="newBtn">NEW GAME</button>
+        <button class="bWatch" id="watchAdBtn">WATCH AD (+10)</button>
+        <button class="bProfile" id="profileBtn">PROFILE</button>
+        <button class="bWithdraw" id="withdrawBtn">WITHDRAW</button>
+      </div>
+
+      <div class="dev">Developed by <a href="#" style="color:#2563eb;text-decoration:none">iSmart Software Ltd</a></div>
+      <div class="fine">Tip: Turn your phone sideways for a wider paddle 😄</div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===================== Local "User System" (demo) ===================== */
+const LS_KEY_USER = 'is_brick_user';
+const LS_KEY_BAL  = 'is_brick_balance';
+const LS_KEY_WREQ = 'is_brick_withdraw_requests';
+
+function getTelegramUser(){
+  try{
+    const wa = window.Telegram && window.Telegram.WebApp;
+    if(wa && wa.initDataUnsafe && wa.initDataUnsafe.user){
+      const u = wa.initDataUnsafe.user;
+      return {
+        id: String(u.id),
+        name: (u.first_name||'') + (u.last_name?(' '+u.last_name):''),
+        username: u.username ? '@'+u.username : '',
+        email: ''
+      };
+    }
+  }catch(e){}
+  return null;
+}
+function loadUser(){
+  const tgu = getTelegramUser();
+  if(tgu){
+    // prefer Telegram identity, but allow overriding saved fields except ID
+    const saved = JSON.parse(localStorage.getItem(LS_KEY_USER) || 'null');
+    const user = { ...tgu, ...(saved||{}) , id: tgu.id };
+    localStorage.setItem(LS_KEY_USER, JSON.stringify(user));
+    return user;}
+  let u = JSON.parse(localStorage.getItem(LS_KEY_USER) || 'null');
+  if(!u){
+    u = { id: 'guest-' + Math.random().toString(36).slice(2,8), name:'Guest', username:'', email:'' };
+    localStorage.setItem(LS_KEY_USER, JSON.stringify(u));
+  }
+  return u;
+}
+function saveUser(u){
+  localStorage.setItem(LS_KEY_USER, JSON.stringify(u));
+  renderUser();
+}
+function getBalance(){
+  return Number(localStorage.getItem(LS_KEY_BAL) || '0');
+}
+function setBalance(v){
+  localStorage.setItem(LS_KEY_BAL, String(v));
+  document.getElementById('balance').textContent = v;
+  document.getElementById('ui_balance').textContent = v;
+}
+function addBalance(delta){ setBalance(getBalance()+delta); }
+
+function renderUser(){
+  const u = loadUser();
+  document.getElementById('ui_user_name').textContent = u.name || 'Guest';
+  document.getElementById('ui_user_id').textContent = u.id;
+  document.getElementById('p_name').value = u.name || '';
+  document.getElementById('p_username').value = u.username || '';
+  document.getElementById('p_email').value = u.email || '';
+  document.getElementById('p_uid').value = u.id || '';
+}
+
+/* ===================== Ad Cooldown Logic ===================== */
+const AD_COOLDOWN_MS = 10000; // 10 seconds
+let lastAdAt = 0;
+let cdTimer = null;
+
+const $watchBtn = document.getElementById('watchAdBtn');
+const $cooldown = document.getElementById('cooldown');
+const $adLoader = document.getElementById('ad-loader');
+
+function inCooldown(){
+  return Date.now() - lastAdAt < AD_COOLDOWN_MS;
+}
+function updateCooldownUI(){
+  if(!inCooldown()){
+    $watchBtn.disabled = false;
+    $cooldown.textContent = 'Ready';
+    $watchBtn.textContent = 'WATCH AD';
+    return;
+  }
+  const left = Math.ceil((AD_COOLDOWN_MS - (Date.now()-lastAdAt))/1000);
+  $watchBtn.disabled = true;
+  $cooldown.textContent = left + 's';
+  $watchBtn.textContent = 'WAIT '+left+'s';
+}
+function startCooldown(){
+  lastAdAt = Date.now();
+  if(cdTimer) clearInterval(cdTimer);
+  cdTimer = setInterval(()=>{
+    updateCooldownUI();
+    if(!inCooldown()){ clearInterval(cdTimer); cdTimer=null; updateCooldownUI(); }
+  }, 250);
+  updateCooldownUI();
+}
+
+function showLoader(){ $adLoader.style.display='grid'; }
+function hideLoader(){ $adLoader.style.display='none'; }
+
+/* ===================== Ads: manual only (no auto) ===================== */
+// Rewarded: try Gigapub -> fallback Adsgram
+async function showRewardedAndReward(){
+  if(inCooldown()){ updateCooldownUI(); return; }
+  showLoader();
+  try{
+    let ok = false;
+    if(typeof window.showGiga === 'function'){
+      try{
+        await window.showGiga(); // your rewarded here
+        ok = true;
+      }catch(e){ console.warn('Gigapub rewarded fail:', e); }
+    }
+    if(!ok && window.Adsgram && typeof Adsgram.show === 'function'){
+      // Adsgram rewarded (some setups interstitial only; adjust as per their docs)
+      await Adsgram.show(); // if format needed: Adsgram.show({ format:'rewarded' })
+      ok = true;
+    }
+    if(ok){
+      score += 10;
+      addBalance(10);
+      updateHud();
+      startCooldown();
+    }else{
+      alert('Ad not available right now.');
+    }
+  }finally{
+    hideLoader();
+  }
+}
+
+// Optional manual interstitial (kept for future use, not auto-called)
+async function showManualInterstitial(){
+  showLoader();
+  try{
+    let ok = false;
+    if(typeof window.showGiga === 'function'){
+      try{ await window.showGiga(); ok = true; }catch(e){}
+    }
+    if(!ok && window.Adsgram && typeof Adsgram.show === 'function'){
+      try{ await Adsgram.show({ format:'interstitial' }); ok = true; }catch(e){}
+    }
+  }finally{ hideLoader(); }
+}
+
+/* =========================== Game Code =========================== */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+
+let running = false; // start stopped (manual)
+let score = 0, level = 1, lives = 3;
+
+let ball   = { x: canvas.width/2, y: canvas.height-28, r: 8, dx: 3, dy: -3 };
+let paddle = { w: 90, h: 12, x: (canvas.width-90)/2, speed: 7 };
+
+const pad = 8;
+let bricks = [];function makeLevel(n){
+  const rows = 3 + Math.floor((n-1)%4);
+  const cols = 6 + Math.min(4, Math.floor(n/2));
+  const bw = Math.floor((canvas.width - (cols+1)*pad)/cols);
+  const bh = 20;
+  const top = 50;
+  bricks = [];
+  for(let c=0;c<cols;c++){
+    bricks[c] = [];
+    for(let r=0;r<rows;r++){
+      const hole = (r+c+n)%7===0;
+      bricks[c][r] = { x: pad + c*(bw+pad), y: top + r*(bh+pad), w:bw, h:bh, live: hole?0:1 };
+    }
+  }
+  const spd = 3 + Math.min(5, n*0.4);
+  ball.dx = (ball.dx>0?1:-1) * spd;
+  ball.dy = (ball.dy>0?-1:1) * -spd;
+  paddle.w = Math.max(60, 90 - n*3);
+}
+makeLevel(level);
+
+// input
+let left=false, right=false;
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft') left=true;
+  if(e.key==='ArrowRight') right=true;
+  if(e.key===' ') toggleRun();
+});
+document.addEventListener('keyup',e=>{
+  if(e.key==='ArrowLeft') left=false;
+  if(e.key==='ArrowRight') right=false;
+});
+
+function pointerMove(clientX){
+  const rect = canvas.getBoundingClientRect();
+  const x = clientX - rect.left;
+  paddle.x = Math.max(0, Math.min(canvas.width - paddle.w, x - paddle.w/2));
+}
+canvas.addEventListener('mousemove', e=>pointerMove(e.clientX));
+canvas.addEventListener('touchmove', e=>{
+  if(e.touches[0]) pointerMove(e.touches[0].clientX);
+}, {passive:true});
+
+// UI refs
+const scoreEl = document.getElementById('score');
+const levelEl = document.getElementById('level');
+const livesEl = document.getElementById('lives');
+const balanceEl = document.getElementById('balance');
+
+const runPauseBtn = document.getElementById('runPauseBtn');
+const newBtn = document.getElementById('newBtn');
+const profileBtn = document.getElementById('profileBtn');
+const withdrawBtn = document.getElementById('withdrawBtn');
+
+runPauseBtn.onclick = ()=>toggleRun();
+newBtn.onclick = ()=>resetGame();
+document.getElementById('watchAdBtn').onclick = ()=>showRewardedAndReward();
+
+// Profile modal actions
+const profileModal = document.getElementById('profileModal');
+profileBtn.onclick = ()=>{ renderUser(); profileModal.style.display='flex'; };
+document.getElementById('closeProfileBtn').onclick = ()=> profileModal.style.display='none';
+document.getElementById('saveProfileBtn').onclick = ()=>{
+  const u = loadUser();
+  u.name = document.getElementById('p_name').value.trim();
+  u.username = document.getElementById('p_username').value.trim();
+  u.email = document.getElementById('p_email').value.trim();
+  saveUser(u);
+  profileModal.style.display='none';
+};
+
+// Withdraw modal actions (demo)
+const withdrawModal = document.getElementById('withdrawModal');
+withdrawBtn.onclick = ()=>{
+  document.getElementById('w_balance').value = getBalance();
+  withdrawModal.style.display='flex';
+};
+document.getElementById('closeWithdrawBtn').onclick = ()=> withdrawModal.style.display='none';
+document.getElementById('submitWithdrawBtn').onclick = ()=>{
+  const bal = getBalance();
+  const amt = Number(document.getElementById('w_amount').value||'0');
+  const method = document.getElementById('w_method').value;
+  const account = document.getElementById('w_account').value.trim();
+  if(amt < 100) return alert('Minimum withdraw 100');
+  if(amt > bal) return alert('Insufficient balance');
+  if(!account) return alert('Enter account / wallet');
+
+  const reqs = JSON.parse(localStorage.getItem(LS_KEY_WREQ) || '[]');
+  const u = loadUser();
+  reqs.push({ id: 'wr-'+Date.now(), user: u, method, account, amount: amt, at: new Date().toISOString(), status:'pending' });
+  localStorage.setItem(LS_KEY_WREQ, JSON.stringify(reqs));
+
+  setBalance(bal - amt);
+  alert('Withdraw request submitted (demo).');
+  withdrawModal.style.display='none';
+};
+
+function toggleRun(){
+  running = !running;
+  runPauseBtn.textContent = running ? 'RUNNING' : 'START GAME';
+  if(running) requestAnimationFrame(loop);
+}
+function resetGame(){score=0; level=1; lives=3;
+  ball.x = canvas.width/2; ball.y = canvas.height-28; ball.dx = 3; ball.dy = -3;
+  paddle.x = (canvas.width - paddle.w)/2;
+  makeLevel(level);
+  updateHud();
+  running = false;
+  runPauseBtn.textContent='START GAME';
+}
+function updateHud(){
+  scoreEl.textContent = score;
+  levelEl.textContent = level;
+  livesEl.textContent = lives;
+  balanceEl.textContent = getBalance();
+}
+function rectIntersect(ax,ay,aw,ah, bx,by,bw,bh){
+  return ax < bx+bw && ax+aw > bx && ay < by+bh && ay+ah > by;
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  // subtle grid
+  ctx.save(); ctx.globalAlpha=.07;
+  for(let i=0;i<canvas.width;i+=20) ctx.fillRect(i,0,1,canvas.height);
+  for(let i=0;i<canvas.height;i+=20) ctx.fillRect(0,i,canvas.width,1);
+  ctx.restore();
+
+  // paddle
+  ctx.fillStyle="#cbd5e1";
+  ctx.fillRect(paddle.x, canvas.height-18, paddle.w, 12);
+
+  // ball
+  ctx.beginPath();
+  ctx.fillStyle="#fca5a5";
+  ctx.arc(ball.x, ball.y, ball.r, 0, Math.PI*2);
+  ctx.fill();
+
+  // bricks + hits
+  let remain=0;
+  for(const col of bricks){
+    for(const b of col){
+      if(!b.live) continue;
+      remain++;
+      ctx.fillStyle = b.y%2 ? "#34d399" : "#60a5fa";
+      ctx.fillRect(b.x,b.y,b.w,b.h);
+      if(rectIntersect(ball.x-ball.r, ball.y-ball.r, ball.r*2, ball.r*2, b.x,b.y,b.w,b.h)){
+        b.live=0; score+=10; updateHud();
+        ball.dy = -ball.dy;
+      }
+    }
+  }
+
+  if(remain===0){
+    level++; updateHud();
+    makeLevel(level);
+  }
+
+  // walls
+  if(ball.x + ball.dx < ball.r || ball.x + ball.dx > canvas.width - ball.r) ball.dx = -ball.dx;
+  if(ball.y + ball.dy < ball.r) ball.dy = -ball.dy;
+
+  // floor / paddle
+  if(ball.y + ball.dy > canvas.height - ball.r - 12){
+    if(ball.x > paddle.x && ball.x < paddle.x + paddle.w){
+      const hit = (ball.x - (paddle.x + paddle.w/2)) / (paddle.w/2);
+      ball.dx = (Math.max(-1, Math.min(1, hit))) * (Math.abs(ball.dx)+0.5);
+      ball.dy = -Math.abs(ball.dy);
+    }else if(ball.y + ball.dy > canvas.height - ball.r){
+      lives--; updateHud();
+      if(lives<=0){
+        running=false;
+        alert("GAME OVER 😢");
+        // ইচ্ছা করলে এখানে ম্যানুয়াল interstitial কল করতে পারো:
+        // showManualInterstitial();
+      }else{
+        ball.x = canvas.width/2; ball.y = canvas.height-28;
+        ball.dx = 3*(Math.random()>.5?1:-1); ball.dy = -3;
+      }
+    }
+  }
+
+  // paddle move
+  if(left)  paddle.x = Math.max(0, paddle.x - paddle.speed);
+  if(right) paddle.x = Math.min(canvas.width - paddle.w, paddle.x + paddle.speed);
+
+  // advance ball
+  ball.x += ball.dx; ball.y += ball.dy;
+}
+function loop(){ if(!running) return; draw(); requestAnimationFrame(loop); }
+
+/* ====== Init ====== */
+renderUser();
+setBalance(getBalance()); // refresh UI
+updateHud();
+updateCooldownUI();
+</script>
 </body>
 </html>
+
+
+
+
+
+
+
