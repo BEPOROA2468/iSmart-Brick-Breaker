@@ -228,7 +228,7 @@ function updateCooldownUI(){
   if(!inCooldown()){
     $watchBtn.disabled = false;
     $cooldown.textContent = 'Ready';
-    $watchBtn.textContent = 'WATCH AD (+10)';
+    $watchBtn.textContent = 'WATCH AD';
     return;
   }
   const left = Math.ceil((AD_COOLDOWN_MS - (Date.now()-lastAdAt))/1000);
@@ -504,4 +504,5 @@ updateCooldownUI();
 </script>
 </body>
 </html>
+
 
