@@ -302,12 +302,7 @@ async function showRewardedAndReward(){
         await window.TelegramAdsController.showAd(); 
         ok = true;
       }catch(e){ console.warn('TelegramAdsController fail:', e); }
-    }
     
-    if(!ok && window.Adsgram && typeof Adsgram.show === 'function'){
-      // Adsgram rewarded (some setups interstitial only; adjust as per their docs)
-      await Adsgram.show(); // if format needed: Adsgram.show({ format:'rewarded' })
-      ok = true;
     }
     if(ok){
       score += 10;
@@ -546,6 +541,7 @@ updateCooldownUI();
 </script>
 </body>
 </html>
+
 
 
 
