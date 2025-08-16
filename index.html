@@ -80,6 +80,16 @@ function initGame(){
 }
 </script>
 
+<!-- Telegram Ads Controller -->
+<script src="https://richinfo.co/richpartners/telegram/js/tg-ob.js"></script>
+<script>
+  window.TelegramAdsController = new TelegramAdsController();
+  window.TelegramAdsController.initialize({
+    pubId: "891200",
+    appId: "3229",
+  });
+</script>
+  
 </head>
   
 <body>
@@ -285,6 +295,15 @@ async function showRewardedAndReward(){
         ok = true;
       }catch(e){ console.warn('Gigapub rewarded fail:', e); }
     }
+
+// 3. TelegramAdsController
+    if(!ok && window.TelegramAdsController && typeof window.TelegramAdsController.showAd === 'function'){
+      try{
+        await window.TelegramAdsController.showAd(); 
+        ok = true;
+      }catch(e){ console.warn('TelegramAdsController fail:', e); }
+    }
+    
     if(!ok && window.Adsgram && typeof Adsgram.show === 'function'){
       // Adsgram rewarded (some setups interstitial only; adjust as per their docs)
       await Adsgram.show(); // if format needed: Adsgram.show({ format:'rewarded' })
@@ -527,6 +546,7 @@ updateCooldownUI();
 </script>
 </body>
 </html>
+
 
 
 
